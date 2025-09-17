@@ -1,5 +1,5 @@
-import { Contract, parseEther, formatEther } from 'viem';
-import { useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi';
+import { Contract, parseEther, formatEther, createPublicClient, createWalletClient, http } from 'viem';
+import { sepolia } from 'wagmi/chains';
 import { FHEUtils, QuestContribution, QuestReward } from './fhe';
 
 // Contract ABI - This would be generated from your compiled contract
@@ -240,7 +240,8 @@ export class QuestContract {
     description: string,
     maxParticipants: number,
     duration: number,
-    rewardPool: QuestReward
+    rewardPool: QuestReward,
+    walletClient: any
   ): Promise<{
     questId: number;
     txHash: string;
@@ -257,9 +258,7 @@ export class QuestContract {
       const inputProofBytes = this.encodeProof(proof);
 
       // Call contract function
-      const { writeContract } = useWriteContract();
-      
-      const txHash = await writeContract({
+      const txHash = await walletClient.writeContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'createQuest',
@@ -275,7 +274,7 @@ export class QuestContract {
       });
 
       // Wait for transaction confirmation
-      const { data: receipt } = useWaitForTransactionReceipt({
+      const receipt = await walletClient.waitForTransactionReceipt({
         hash: txHash,
       });
 
@@ -292,7 +291,8 @@ export class QuestContract {
   // Join a quest with encrypted contribution
   async joinQuest(
     questId: number,
-    contribution: QuestContribution
+    contribution: QuestContribution,
+    walletClient: any
   ): Promise<{
     participantId: number;
     txHash: string;
@@ -309,9 +309,7 @@ export class QuestContract {
       const contributionBytes = this.encodeEncryptedData(encryptedContribution);
       const inputProofBytes = this.encodeProof(proof);
 
-      const { writeContract } = useWriteContract();
-      
-      const txHash = await writeContract({
+      const txHash = await walletClient.writeContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'joinQuest',
@@ -322,7 +320,7 @@ export class QuestContract {
         ],
       });
 
-      const { data: receipt } = useWaitForTransactionReceipt({
+      const receipt = await walletClient.waitForTransactionReceipt({
         hash: txHash,
       });
 
@@ -341,7 +339,8 @@ export class QuestContract {
     completionData: {
       score: number;
       timeSpent: number;
-    }
+    },
+    walletClient: any
   ): Promise<{
     txHash: string;
   }> {
@@ -356,9 +355,7 @@ export class QuestContract {
       const completionProofBytes = this.encodeEncryptedData(encryptedScore);
       const inputProofBytes = this.encodeProof(proof);
 
-      const { writeContract } = useWriteContract();
-      
-      const txHash = await writeContract({
+      const txHash = await walletClient.writeContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'completeQuest',
@@ -377,13 +374,11 @@ export class QuestContract {
   }
 
   // Reveal quest rewards
-  async revealRewards(questId: number): Promise<{
+  async revealRewards(questId: number, walletClient: any): Promise<{
     txHash: string;
   }> {
     try {
-      const { writeContract } = useWriteContract();
-      
-      const txHash = await writeContract({
+      const txHash = await walletClient.writeContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'revealRewards',
@@ -400,7 +395,8 @@ export class QuestContract {
   // Claim reward
   async claimReward(
     questId: number,
-    rewardAmount: number
+    rewardAmount: number,
+    walletClient: any
   ): Promise<{
     txHash: string;
   }> {
@@ -410,9 +406,7 @@ export class QuestContract {
       const rewardAmountBytes = this.encodeEncryptedData(encryptedReward);
       const inputProofBytes = this.encodeProof(proof);
 
-      const { writeContract } = useWriteContract();
-      
-      const txHash = await writeContract({
+      const txHash = await walletClient.writeContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'claimReward',
@@ -431,9 +425,9 @@ export class QuestContract {
   }
 
   // Get quest information
-  async getQuestInfo(questId: number) {
+  async getQuestInfo(questId: number, publicClient: any) {
     try {
-      const { data } = useReadContract({
+      const data = await publicClient.readContract({
         address: this.contractAddress as `0x${string}`,
         abi: this.abi,
         functionName: 'getQuestInfo',

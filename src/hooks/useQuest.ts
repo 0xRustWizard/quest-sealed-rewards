@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { questContract } from '@/lib/contract';
+import { useQuestContract } from '@/hooks/useContract';
 import { FHEUtils, QuestContribution } from '@/lib/fhe';
 
 export interface Quest {
@@ -30,6 +30,7 @@ export interface QuestState {
 
 export const useQuest = () => {
   const { address } = useAccount();
+  const { joinQuest: contractJoinQuest } = useQuestContract();
   const [state, setState] = useState<QuestState>({
     quests: [],
     isLoading: false,
@@ -123,34 +124,28 @@ export const useQuest = () => {
     try {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // Encrypt contribution data
-      const { encryptedContribution, proof } = await FHEUtils.encryptQuestContribution({
-        amount: contribution.amount,
-        difficulty: contribution.difficulty,
-        timeSpent: contribution.timeSpent,
-      });
-
       // Join quest on contract
-      const result = await questContract.joinQuest(questId, contribution);
+      const result = await contractJoinQuest(questId, contribution);
       
-      // Update local state
-      setState(prev => ({
-        ...prev,
-        joinedQuests: [...prev.joinedQuests, questId],
-        quests: prev.quests.map(quest =>
-          quest.id === questId
-            ? {
-                ...quest,
-                isJoined: true,
-                encryptedContribution,
-                currentParticipants: quest.currentParticipants + 1,
-              }
-            : quest
-        ),
-        isLoading: false,
-      }));
+      if (result.success) {
+        // Update local state
+        setState(prev => ({
+          ...prev,
+          joinedQuests: [...prev.joinedQuests, questId],
+          quests: prev.quests.map(quest =>
+            quest.id === questId
+              ? {
+                  ...quest,
+                  isJoined: true,
+                  currentParticipants: quest.currentParticipants + 1,
+                }
+              : quest
+          ),
+          isLoading: false,
+        }));
+      }
 
-      return { success: true, txHash: result.txHash };
+      return result;
     } catch (error) {
       console.error('Error joining quest:', error);
       setState(prev => ({

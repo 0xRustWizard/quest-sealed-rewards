@@ -19,7 +19,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useAccount } from 'wagmi';
-import { questContract } from '@/lib/contract';
+import { useQuestContract } from '@/hooks/useContract';
 import { FHEUtils, QuestContribution } from '@/lib/fhe';
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,6 +46,7 @@ interface QuestFormData {
 const JoinQuestModal = ({ isOpen, onClose, quest }: JoinQuestModalProps) => {
   const { address } = useAccount();
   const { toast } = useToast();
+  const { joinQuest, isPending } = useQuestContract();
   
   const [formData, setFormData] = useState<QuestFormData>({
     contribution: 0,
@@ -117,16 +118,20 @@ const JoinQuestModal = ({ isOpen, onClose, quest }: JoinQuestModalProps) => {
       };
 
       // Step 3: Join quest with encrypted data
-      const result = await questContract.joinQuest(quest.id, contribution);
+      const result = await joinQuest(quest.id, contribution);
       
-      setTxHash(result.txHash);
-      setStep(4);
-      setIsSuccess(true);
-      
-      toast({
-        title: "🎉 Quest Joined Successfully!",
-        description: "Your encrypted contribution has been recorded on-chain.",
-      });
+      if (result.success) {
+        setTxHash(result.txHash || '');
+        setStep(4);
+        setIsSuccess(true);
+        
+        toast({
+          title: "🎉 Quest Joined Successfully!",
+          description: "Your encrypted contribution has been recorded on-chain.",
+        });
+      } else {
+        throw new Error(result.error || 'Failed to join quest');
+      }
 
     } catch (error) {
       console.error('Error joining quest:', error);
