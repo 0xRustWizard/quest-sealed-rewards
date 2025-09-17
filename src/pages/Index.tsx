@@ -16,6 +16,7 @@ const Index = () => {
 
   const mockQuests = [
     {
+      id: 1,
       title: "The Forgotten Cipher",
       description: "Decode ancient symbols hidden within mystical texts. Only the wisest adventurers will uncover the truth behind the forgotten language of the ancients.",
       participants: 7,
@@ -27,6 +28,7 @@ const Index = () => {
       rewardType: "Sealed" as const
     },
     {
+      id: 2,
       title: "Dragon's Mathematical Riddle", 
       description: "Face the legendary dragon's most challenging puzzle. Solve complex mathematical sequences that have stumped scholars for centuries.",
       participants: 12,
@@ -38,6 +40,7 @@ const Index = () => {
       rewardType: "Sealed" as const
     },
     {
+      id: 3,
       title: "Mystic Forest Expedition",
       description: "Navigate through the enchanted forest using only ancient maps and celestial guidance. Discover hidden treasures that await the brave.",
       participants: 15,
@@ -49,6 +52,7 @@ const Index = () => {
       rewardType: "Mystery" as const
     },
     {
+      id: 4,
       title: "The Alchemist's Challenge",
       description: "Master the art of transformation. Create legendary potions using rare ingredients found only in the most dangerous realms.",
       participants: 3,
@@ -87,6 +91,7 @@ const Index = () => {
           {mockQuests.map((quest, index) => (
             <QuestCard
               key={index}
+              id={quest.id}
               title={quest.title}
               description={quest.description}
               participants={quest.participants}

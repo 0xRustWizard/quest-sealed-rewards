@@ -10,10 +10,13 @@ import {
   Star, 
   Lock,
   CheckCircle,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
+import JoinQuestModal from "./JoinQuestModal";
 
 interface QuestCardProps {
+  id: number;
   title: string;
   description: string;
   participants: number;
@@ -27,6 +30,7 @@ interface QuestCardProps {
 }
 
 const QuestCard = ({
+  id,
   title,
   description,
   participants,
@@ -39,6 +43,7 @@ const QuestCard = ({
   onJoinQuest
 }: QuestCardProps) => {
   const [isJoined, setIsJoined] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
 
   const difficultyColors = {
     Easy: "bg-quest text-white",
@@ -48,6 +53,10 @@ const QuestCard = ({
   };
 
   const handleJoinQuest = () => {
+    setShowJoinModal(true);
+  };
+
+  const handleQuestJoined = () => {
     setIsJoined(true);
     onJoinQuest();
   };
@@ -147,6 +156,21 @@ const QuestCard = ({
           </div>
         </div>
       </div>
+
+      {/* Join Quest Modal */}
+      <JoinQuestModal
+        isOpen={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        quest={{
+          id,
+          title,
+          description,
+          maxParticipants,
+          currentParticipants: participants,
+          difficulty,
+          timeRemaining,
+        }}
+      />
     </Card>
   );
 };
